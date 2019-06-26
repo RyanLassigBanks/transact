@@ -22,5 +22,6 @@
 
 pub mod batch;
 pub mod builder;
+pub mod errors;
 pub mod receipt;
 pub mod transaction;
