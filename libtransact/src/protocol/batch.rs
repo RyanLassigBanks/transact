@@ -31,6 +31,7 @@ use crate::protos::{
     FromBytes, FromNative, FromProto, IntoBytes, IntoNative, IntoProto, ProtoConversionError,
 };
 use crate::signing;
+use transact_derive::FromProtoImpl;
 
 use super::transaction::Transaction;
 
@@ -106,10 +107,14 @@ impl IntoBytes for BatchHeader {
 impl IntoProto<protos::batch::BatchHeader> for BatchHeader {}
 impl IntoNative<BatchHeader> for protos::batch::BatchHeader {}
 
-#[derive(Debug, Clone, Eq, Hash, PartialEq)]
+#[derive(FromProtoImpl, Debug, Clone, Eq, Hash, PartialEq)]
+#[proto_type = "protos::batch::Batch"]
 pub struct Batch {
     header: Vec<u8>,
+    #[from_proto_impl(to_string)]
     header_signature: String,
+
+    #[from_proto_impl(Vec)]
     transactions: Vec<Transaction>,
     trace: bool,
 }
@@ -158,22 +163,6 @@ impl BatchPair {
 
     pub fn take(self) -> (Batch, BatchHeader) {
         (self.batch, self.header)
-    }
-}
-
-impl From<protos::batch::Batch> for Batch {
-    fn from(batch: protos::batch::Batch) -> Self {
-        Batch {
-            header: batch.get_header().to_vec(),
-            header_signature: batch.get_header_signature().to_string(),
-            transactions: batch
-                .get_transactions()
-                .to_vec()
-                .into_iter()
-                .map(Transaction::from)
-                .collect(),
-            trace: batch.get_trace(),
-        }
     }
 }
 
@@ -293,6 +282,8 @@ mod tests {
     #[cfg(feature = "sawtooth-compat")]
     use protobuf::Message;
 
+    use crate::protocol::builder::Build;
+    use crate::protocol::transaction::TransactionBuilder;
     #[cfg(feature = "sawtooth-compat")]
     use sawtooth_sdk;
 
@@ -322,16 +313,18 @@ mod tests {
         assert_eq!(signer.public_key(), pair.header().signer_public_key());
         assert_eq!(
             vec![
-                Transaction::new(
-                    BYTES2.to_vec(),
-                    hex::encode(SIGNATURE2.to_string()),
-                    BYTES3.to_vec()
-                ),
-                Transaction::new(
-                    BYTES4.to_vec(),
-                    hex::encode(SIGNATURE3.to_string()),
-                    BYTES5.to_vec()
-                ),
+                TransactionBuilder::new()
+                    .with_header(BYTES2.to_vec())
+                    .with_header_signature(hex::encode(SIGNATURE2.to_string()))
+                    .with_payload(BYTES3.to_vec())
+                    .build()
+                    .unwrap(),
+                TransactionBuilder::new()
+                    .with_header(BYTES4.to_vec())
+                    .with_header_signature(hex::encode(SIGNATURE3.to_string()))
+                    .with_payload(BYTES5.to_vec())
+                    .build()
+                    .unwrap(),
             ],
             pair.batch().transactions()
         );
@@ -342,19 +335,23 @@ mod tests {
     fn batch_builder_chain() {
         let signer = HashSigner::new();
 
+        let transactions = vec![
+            TransactionBuilder::new()
+                .with_header(BYTES2.to_vec())
+                .with_header_signature(hex::encode(SIGNATURE2.to_string()))
+                .with_payload(BYTES3.to_vec())
+                .build()
+                .unwrap(),
+            TransactionBuilder::new()
+                .with_header(BYTES4.to_vec())
+                .with_header_signature(hex::encode(SIGNATURE3.to_string()))
+                .with_payload(BYTES5.to_vec())
+                .build()
+                .unwrap(),
+        ];
+
         let pair = BatchBuilder::new()
-            .with_transactions(vec![
-                Transaction::new(
-                    BYTES2.to_vec(),
-                    hex::encode(SIGNATURE2.to_string()),
-                    BYTES3.to_vec(),
-                ),
-                Transaction::new(
-                    BYTES4.to_vec(),
-                    hex::encode(SIGNATURE3.to_string()),
-                    BYTES5.to_vec(),
-                ),
-            ])
+            .with_transactions(transactions)
             .with_trace(true)
             .build_pair(&signer)
             .unwrap();
@@ -366,19 +363,23 @@ mod tests {
     fn batch_builder_separate() {
         let signer = HashSigner::new();
 
+        let transactions = vec![
+            TransactionBuilder::new()
+                .with_header(BYTES2.to_vec())
+                .with_header_signature(hex::encode(SIGNATURE2.to_string()))
+                .with_payload(BYTES3.to_vec())
+                .build()
+                .unwrap(),
+            TransactionBuilder::new()
+                .with_header(BYTES4.to_vec())
+                .with_header_signature(hex::encode(SIGNATURE3.to_string()))
+                .with_payload(BYTES5.to_vec())
+                .build()
+                .unwrap(),
+        ];
+
         let mut builder = BatchBuilder::new();
-        builder = builder.with_transactions(vec![
-            Transaction::new(
-                BYTES2.to_vec(),
-                hex::encode(SIGNATURE2.to_string()),
-                BYTES3.to_vec(),
-            ),
-            Transaction::new(
-                BYTES4.to_vec(),
-                hex::encode(SIGNATURE3.to_string()),
-                BYTES5.to_vec(),
-            ),
-        ]);
+        builder = builder.with_transactions(transactions);
         builder = builder.with_trace(true);
         let pair = builder.build_pair(&signer).unwrap();
 
@@ -445,25 +446,31 @@ mod tests {
 
     #[test]
     fn batch_fields() {
+        let transactions = vec![
+            TransactionBuilder::new()
+                .with_header(BYTES2.to_vec())
+                .with_header_signature(hex::encode(SIGNATURE2.to_string()))
+                .with_payload(BYTES3.to_vec())
+                .build()
+                .unwrap(),
+            TransactionBuilder::new()
+                .with_header(BYTES4.to_vec())
+                .with_header_signature(hex::encode(SIGNATURE3.to_string()))
+                .with_payload(BYTES5.to_vec())
+                .build()
+                .unwrap(),
+        ];
+
         let batch = Batch {
             header: BYTES1.to_vec(),
             header_signature: SIGNATURE1.to_string(),
-            transactions: vec![
-                Transaction::new(BYTES2.to_vec(), SIGNATURE2.to_string(), BYTES3.to_vec()),
-                Transaction::new(BYTES4.to_vec(), SIGNATURE3.to_string(), BYTES5.to_vec()),
-            ],
+            transactions: transactions.clone(),
             trace: true,
         };
 
         assert_eq!(BYTES1.to_vec(), batch.header());
         assert_eq!(SIGNATURE1, batch.header_signature());
-        assert_eq!(
-            vec![
-                Transaction::new(BYTES2.to_vec(), SIGNATURE2.to_string(), BYTES3.to_vec()),
-                Transaction::new(BYTES4.to_vec(), SIGNATURE3.to_string(), BYTES5.to_vec()),
-            ],
-            batch.transactions()
-        );
+        assert_eq!(transactions, batch.transactions());
         assert_eq!(true, batch.trace());
     }
 

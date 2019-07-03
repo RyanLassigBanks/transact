@@ -147,51 +147,29 @@ pub trait IntoPair {
     fn into_pair(self) -> Result<TransactionPair, TransactionBuildError>;
 }
 
-#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+#[derive(Builder, FromProtoImpl, Debug, Eq, Hash, PartialEq, Clone)]
+#[proto_type = "protos::transaction::Transaction"]
+#[gen_build_impl]
 pub struct Transaction {
+    #[getter]
     header: Vec<u8>,
+
+    #[getter]
+    #[from_proto_impl(to_string)]
     header_signature: String,
+
+    #[getter]
     payload: Vec<u8>,
 }
 
-impl Transaction {
-    pub fn new(header: Vec<u8>, header_signature: String, payload: Vec<u8>) -> Self {
-        Transaction {
-            header,
-            header_signature,
-            payload,
-        }
-    }
-
-    pub fn header(&self) -> &[u8] {
-        &self.header
-    }
-
-    pub fn header_signature(&self) -> &str {
-        &self.header_signature
-    }
-
-    pub fn payload(&self) -> &[u8] {
-        &self.payload
-    }
-
-    pub fn into_pair(self) -> Result<TransactionPair, TransactionBuildError> {
+impl IntoPair for Transaction {
+    fn into_pair(self) -> Result<TransactionPair, TransactionBuildError> {
         let header = TransactionHeader::from_bytes(&self.header)?;
 
         Ok(TransactionPair {
             transaction: self,
             header,
         })
-    }
-}
-
-impl From<protos::transaction::Transaction> for Transaction {
-    fn from(transaction: protos::transaction::Transaction) -> Self {
-        Transaction {
-            header: transaction.get_header().to_vec(),
-            header_signature: transaction.get_header_signature().to_string(),
-            payload: transaction.get_payload().to_vec(),
-        }
     }
 }
 
@@ -717,8 +695,8 @@ mod tests {
         let transaction_proto: protos::transaction::Transaction =
             protobuf::parse_from_bytes(&transaction_bytes).unwrap();
 
-        // Convert to a Transaction
-        let transaction: Transaction = transaction_proto.into();
+        //Convert to a Transaction
+        let transaction: Transaction = Transaction::from_proto(transaction_proto).unwrap();
 
         assert_eq!(BYTES1.to_vec(), transaction.header());
         assert_eq!(SIGNATURE1, transaction.header_signature());

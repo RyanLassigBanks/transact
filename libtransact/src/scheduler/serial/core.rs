@@ -20,7 +20,7 @@
 use crate::context::manager::ContextManagerError;
 use crate::context::{ContextId, ContextLifecycle};
 use crate::protocol::batch::BatchPair;
-use crate::protocol::transaction::Transaction;
+use crate::protocol::transaction::{IntoPair, Transaction};
 use crate::scheduler::BatchExecutionResult;
 use crate::scheduler::ExecutionTask;
 use crate::scheduler::ExecutionTaskCompletionNotification;
