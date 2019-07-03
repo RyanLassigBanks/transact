@@ -29,11 +29,16 @@ use std::error::Error as StdError;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 
+use crate::protocol::builder::Build;
+use crate::protocol::errors::BuilderError;
 use crate::protos;
 use crate::protos::{
     FromBytes, FromNative, FromProto, IntoBytes, IntoNative, IntoProto, ProtoConversionError,
 };
 use crate::signing;
+use transact_derive::{
+    Builder, FromBytesImpl, FromProtoImpl, IntoBytesImpl, IntoNativeImpl, IntoProtoImpl,
+};
 
 static DEFAULT_NONCE_SIZE: usize = 32;
 
@@ -42,60 +47,41 @@ pub enum HashMethod {
     SHA512,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(
+    Builder, IntoProtoImpl, IntoBytesImpl, IntoNativeImpl, FromBytesImpl, Debug, PartialEq, Clone,
+)]
+#[proto_type = "protos::transaction::TransactionHeader"]
+#[gen_build_impl]
 pub struct TransactionHeader {
+    #[getter]
     batcher_public_key: Vec<u8>,
+
+    #[getter]
     dependencies: Vec<Vec<u8>>,
+
+    #[getter]
     family_name: String,
+
+    #[getter]
     family_version: String,
+
+    #[getter]
     inputs: Vec<Vec<u8>>,
+
+    #[getter]
     outputs: Vec<Vec<u8>>,
+
+    #[getter]
     nonce: Vec<u8>,
+
+    #[getter]
     payload_hash: Vec<u8>,
+
+    #[getter]
     payload_hash_method: HashMethod,
+
+    #[getter]
     signer_public_key: Vec<u8>,
-}
-
-impl TransactionHeader {
-    pub fn batcher_public_key(&self) -> &[u8] {
-        &self.batcher_public_key
-    }
-
-    pub fn dependencies(&self) -> &[Vec<u8>] {
-        &self.dependencies
-    }
-
-    pub fn family_name(&self) -> &str {
-        &self.family_name
-    }
-
-    pub fn family_version(&self) -> &str {
-        &self.family_version
-    }
-
-    pub fn inputs(&self) -> &[Vec<u8>] {
-        &self.inputs
-    }
-
-    pub fn nonce(&self) -> &[u8] {
-        &self.nonce
-    }
-
-    pub fn outputs(&self) -> &[Vec<u8>] {
-        &self.outputs
-    }
-
-    pub fn payload_hash(&self) -> &[u8] {
-        &self.payload_hash
-    }
-
-    pub fn payload_hash_method(&self) -> &HashMethod {
-        &self.payload_hash_method
-    }
-
-    pub fn signer_public_key(&self) -> &[u8] {
-        &self.signer_public_key
-    }
 }
 
 impl From<hex::FromHexError> for ProtoConversionError {
@@ -157,32 +143,7 @@ impl FromNative<TransactionHeader> for protos::transaction::TransactionHeader {
     }
 }
 
-impl FromBytes<TransactionHeader> for TransactionHeader {
-    fn from_bytes(bytes: &[u8]) -> Result<TransactionHeader, ProtoConversionError> {
-        let proto: protos::transaction::TransactionHeader = protobuf::parse_from_bytes(bytes)
-            .map_err(|_| {
-                ProtoConversionError::SerializationError(
-                    "Unable to get TransactionHeader from bytes".to_string(),
-                )
-            })?;
-        proto.into_native()
-    }
 }
-
-impl IntoBytes for TransactionHeader {
-    fn into_bytes(self) -> Result<Vec<u8>, ProtoConversionError> {
-        let proto = self.into_proto()?;
-        let bytes = proto.write_to_bytes().map_err(|_| {
-            ProtoConversionError::SerializationError(
-                "Unable to get bytes from TransactionHeader".to_string(),
-            )
-        })?;
-        Ok(bytes)
-    }
-}
-
-impl IntoProto<protos::transaction::TransactionHeader> for TransactionHeader {}
-impl IntoNative<TransactionHeader> for protos::transaction::TransactionHeader {}
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 pub struct Transaction {
