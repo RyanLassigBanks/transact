@@ -240,7 +240,7 @@ mod xo_compat_test {
     use crate::protocol::{
         batch::{BatchBuilder, BatchPair},
         receipt::StateChange,
-        transaction::{HashMethod, TransactionBuilder},
+        transaction::{HashMethod, TransactionPairBuilder},
     };
     use crate::scheduler::{
         serial::SerialScheduler, BatchExecutionResult, Scheduler, TransactionExecutionResult,
@@ -423,7 +423,7 @@ mod xo_compat_test {
 
     fn create_batch(signer: &Signer, game_name: &str, payload: &str) -> BatchPair {
         let game_address = calculate_game_address(game_name);
-        let txn_pair = TransactionBuilder::new()
+        let txn_pair = TransactionPairBuilder::new()
             .with_batcher_public_key(signer.public_key().to_vec())
             .with_family_name("xo".to_string())
             .with_family_version("1.0".to_string())

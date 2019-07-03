@@ -142,7 +142,7 @@ mod tests {
 
     use super::*;
     use crate::execution::adapter::test_adapter::TestExecutionAdapter;
-    use crate::protocol::transaction::{HashMethod, TransactionBuilder, TransactionPair};
+    use crate::protocol::transaction::{HashMethod, TransactionPair, TransactionPairBuilder};
     use crate::scheduler::ExecutionTask;
     use crate::scheduler::ExecutionTaskCompletionNotification;
     use crate::scheduler::ExecutionTaskCompletionNotifier;
@@ -215,7 +215,7 @@ mod tests {
     }
 
     fn create_txn(signer: &Signer, family_name: &str) -> TransactionPair {
-        TransactionBuilder::new()
+        TransactionPairBuilder::new()
             .with_batcher_public_key(hex::decode(KEY1).unwrap())
             .with_dependencies(vec![hex::decode(KEY2).unwrap(), hex::decode(KEY3).unwrap()])
             .with_family_name(family_name.to_string())

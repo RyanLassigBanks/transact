@@ -458,7 +458,7 @@ impl ExecutorThread {
 mod tests {
     use super::*;
     use crate::execution::adapter::test_adapter::TestExecutionAdapter;
-    use crate::protocol::transaction::{HashMethod, TransactionBuilder, TransactionPair};
+    use crate::protocol::transaction::{HashMethod, TransactionPair, TransactionPairBuilder};
     use crate::scheduler::ExecutionTaskCompletionNotification;
     use crate::signing::{hash::HashSigner, Signer};
     use std::{self, collections::HashSet, sync::mpsc::channel};
@@ -688,7 +688,7 @@ mod tests {
     }
 
     fn create_txn(signer: &Signer) -> TransactionPair {
-        TransactionBuilder::new()
+        TransactionPairBuilder::new()
             .with_batcher_public_key(hex::decode(KEY1).unwrap())
             .with_dependencies(vec![hex::decode(KEY2).unwrap(), hex::decode(KEY3).unwrap()])
             .with_family_name(FAMILY_NAME.to_string())

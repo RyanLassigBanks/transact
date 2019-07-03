@@ -18,7 +18,7 @@
 use std::error::Error;
 
 use crate::handler::{ApplyError, TransactionContext, TransactionHandler};
-use crate::protocol::transaction::{HashMethod, TransactionBuilder, TransactionPair};
+use crate::protocol::transaction::{HashMethod, TransactionPair, TransactionPairBuilder};
 use crate::signing::hash::HashSigner;
 
 const COMMAND_FAMILY_NAME: &str = "command";
@@ -99,7 +99,7 @@ impl std::fmt::Display for Command {
 
 pub fn make_command_transaction(commands: &[Command]) -> TransactionPair {
     let signer = HashSigner::new();
-    TransactionBuilder::new()
+    TransactionPairBuilder::new()
         .with_batcher_public_key(vec![0u8, 0u8, 0u8, 0u8])
         .with_family_name(COMMAND_FAMILY_NAME.to_owned())
         .with_family_version(COMMAND_VERSION.to_owned())

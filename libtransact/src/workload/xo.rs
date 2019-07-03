@@ -1,8 +1,8 @@
 use crate::protocol::batch::BatchBuilder;
 use crate::protocol::batch::BatchPair;
 use crate::protocol::transaction::HashMethod;
-use crate::protocol::transaction::TransactionBuilder;
 use crate::protocol::transaction::TransactionPair;
+use crate::protocol::transaction::TransactionPairBuilder;
 use crate::signing::hash::HashSigner;
 use crate::signing::Signer;
 use crate::workload::error::WorkloadError;
@@ -57,7 +57,7 @@ impl TransactionWorkload for XoTransactionWorkload {
 
         let payload = Payload::new_as_create_with_random_name(&mut self.rng);
 
-        Ok(TransactionBuilder::new()
+        Ok(TransactionPairBuilder::new()
             .with_family_name(FAMILY_NAME.to_string())
             .with_family_version(FAMILY_VERSION.to_string())
             .with_inputs(payload.inputs())

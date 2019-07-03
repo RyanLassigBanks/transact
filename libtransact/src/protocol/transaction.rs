@@ -302,7 +302,7 @@ impl From<ProtoConversionError> for TransactionBuildError {
 }
 
 #[derive(Default, Clone)]
-pub struct TransactionBuilder {
+pub struct TransactionPairBuilder {
     batcher_public_key: Option<Vec<u8>>,
     dependencies: Option<Vec<Vec<u8>>>,
     family_name: Option<String>,
@@ -314,55 +314,52 @@ pub struct TransactionBuilder {
     payload: Option<Vec<u8>>,
 }
 
-impl TransactionBuilder {
+impl TransactionPairBuilder {
     pub fn new() -> Self {
-        TransactionBuilder::default()
+        Self::default()
     }
 
-    pub fn with_batcher_public_key(mut self, batcher_public_key: Vec<u8>) -> TransactionBuilder {
+    pub fn with_batcher_public_key(mut self, batcher_public_key: Vec<u8>) -> Self {
         self.batcher_public_key = Some(batcher_public_key);
         self
     }
 
-    pub fn with_dependencies(mut self, dependencies: Vec<Vec<u8>>) -> TransactionBuilder {
+    pub fn with_dependencies(mut self, dependencies: Vec<Vec<u8>>) -> Self {
         self.dependencies = Some(dependencies);
         self
     }
 
-    pub fn with_family_name(mut self, family_name: String) -> TransactionBuilder {
+    pub fn with_family_name(mut self, family_name: String) -> Self {
         self.family_name = Some(family_name);
         self
     }
 
-    pub fn with_family_version(mut self, family_version: String) -> TransactionBuilder {
+    pub fn with_family_version(mut self, family_version: String) -> Self {
         self.family_version = Some(family_version);
         self
     }
 
-    pub fn with_inputs(mut self, inputs: Vec<Vec<u8>>) -> TransactionBuilder {
+    pub fn with_inputs(mut self, inputs: Vec<Vec<u8>>) -> Self {
         self.inputs = Some(inputs);
         self
     }
 
-    pub fn with_outputs(mut self, outputs: Vec<Vec<u8>>) -> TransactionBuilder {
+    pub fn with_outputs(mut self, outputs: Vec<Vec<u8>>) -> Self {
         self.outputs = Some(outputs);
         self
     }
 
-    pub fn with_nonce(mut self, nonce: Vec<u8>) -> TransactionBuilder {
+    pub fn with_nonce(mut self, nonce: Vec<u8>) -> Self {
         self.nonce = Some(nonce);
         self
     }
 
-    pub fn with_payload_hash_method(
-        mut self,
-        payload_hash_method: HashMethod,
-    ) -> TransactionBuilder {
+    pub fn with_payload_hash_method(mut self, payload_hash_method: HashMethod) -> Self {
         self.payload_hash_method = Some(payload_hash_method);
         self
     }
 
-    pub fn with_payload(mut self, payload: Vec<u8>) -> TransactionBuilder {
+    pub fn with_payload(mut self, payload: Vec<u8>) -> Self {
         self.payload = Some(payload);
         self
     }
@@ -387,6 +384,7 @@ impl TransactionBuilder {
         let outputs = self.outputs.ok_or_else(|| {
             TransactionBuildError::MissingField("'outputs' field is required".to_string())
         })?;
+
         let nonce = self.nonce.unwrap_or_else(|| {
             rand::thread_rng()
                 .sample_iter(&Alphanumeric)
@@ -528,7 +526,7 @@ mod tests {
     fn transaction_builder_chain() {
         let signer = HashSigner::new();
 
-        let pair = TransactionBuilder::new()
+        let pair = TransactionPairBuilder::new()
             .with_batcher_public_key(hex::decode(KEY1).unwrap())
             .with_dependencies(vec![hex::decode(KEY2).unwrap(), hex::decode(KEY3).unwrap()])
             .with_family_name(FAMILY_NAME.to_string())
@@ -554,7 +552,7 @@ mod tests {
     fn transaction_builder_seperate() {
         let signer = HashSigner::new();
 
-        let mut builder = TransactionBuilder::new();
+        let mut builder = TransactionPairBuilder::new();
         builder = builder.with_batcher_public_key(hex::decode(KEY1).unwrap());
         builder =
             builder.with_dependencies(vec![hex::decode(KEY2).unwrap(), hex::decode(KEY3).unwrap()]);

@@ -150,7 +150,7 @@ impl Default for TestExecutionAdapter {
 mod tests {
 
     use super::*;
-    use crate::protocol::transaction::{HashMethod, TransactionBuilder};
+    use crate::protocol::transaction::{HashMethod, TransactionPairBuilder};
     use crate::signing::hash::HashSigner;
     use std::sync::{
         atomic::{AtomicBool, Ordering},
@@ -230,7 +230,7 @@ mod tests {
     fn make_transaction() -> TransactionPair {
         let signer = HashSigner::new();
 
-        TransactionBuilder::new()
+        TransactionPairBuilder::new()
             .with_batcher_public_key(vec![])
             .with_dependencies(vec![vec![]])
             .with_family_name("test".to_string())
