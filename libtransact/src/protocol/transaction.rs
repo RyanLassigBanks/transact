@@ -143,6 +143,8 @@ impl FromNative<TransactionHeader> for protos::transaction::TransactionHeader {
     }
 }
 
+pub trait IntoPair {
+    fn into_pair(self) -> Result<TransactionPair, TransactionBuildError>;
 }
 
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
